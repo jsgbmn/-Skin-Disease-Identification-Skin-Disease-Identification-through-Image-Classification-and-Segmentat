@@ -1,19 +1,35 @@
-# Skin Disease Identification through Image Classification and Segmentation Using Deep Learning Techniques
- an a soft web application that could analyze the uploaded image of the user and classify whether the patient potentially has a viral skin infection or not
+# SKIN Disease Identification System 🩺
 
- <p align="center">
+A simple web app that lets you upload a skin image (or use your webcam) and get an AI-based prediction about possible skin disease. Built with Flask, TensorFlow/Keras, and OpenCV.
 
-## Archietecture Model
-![image](https://github.com/jnsgbmn/-Skin-Disease-Identification-Skin-Disease-Identification-through-Image-Classification-and-Segmentat/assets/102467227/502977e8-7c86-44c5-9eec-995706057c79)
+> Disclaimer: This project is for educational and demo purposes only and is **not** a medical device. Always consult a licensed dermatologist for real diagnoses.
+
+---
 
 ## Features
-- We use Architecture of ResNet-152 in this study. ResNet-152 is a type of neural network architecture used for image classification containing 152 layers.And we use Gaussian Noise applied in an Image.
 
-- Image augmentation is a technique that is used in computer vision to artificially increase the size of a training dataset by generating variations of existing images.The purpose of this technique is to enhance the diversity of the images used to train models in machine learning, which can lead to a better generalization on new, and unseen data.
+- Upload skin lesion images for analysis.
+- Capture images directly from your webcam.
+- Deep learning model (Keras/TensorFlow) for binary prediction.
+- Clean web interface built with Flask.
+- Basic health-check route for deployment.
 
-- The system has a feature that utilizes the Global Viral skin diseases dataset from Kaggle for the purpose of analyzing cases. These datasets are displayed using an open-source library called plotly.js, which can be visualized in Jupiter notebook and integrated into the server.
+---
 
-- the WHO’s Viral Skin Diseases Analysis Cases, an HTML iframe element tag that embeds and interactive chart or table from the website ourworldindata.org. The chart is related to viral disease cases today and displays confirmed cases data over time, with options to filter by various metrics such as frequency and relative population. 
+## Tech Stack
 
+- **Backend:** Flask (Python)
+- **ML Model:** TensorFlow / Keras
+- **Image Processing:** OpenCV, Pillow, NumPy
+- **Front-end:** HTML/CSS (Jinja templates)
 
+---
 
+## Getting Started
+
+### 1. Clone the repo
+
+```bash
+git clone https://github.com/your-username/your-repo-name.git
+cd your-repo-name
+```
