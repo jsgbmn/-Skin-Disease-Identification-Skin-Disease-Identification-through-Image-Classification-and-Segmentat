@@ -1,3 +1,4 @@
+![Alt](https://repobeats.axiom.co/api/embed/b901de64a69da60beab16ac63ccf9cf5146a2882.svg "Repobeats analytics image")
 # SKIN Disease Identification System 🩺
 <img width="1487" height="1134" alt="Screenshot 2026-01-11 at 11 55 33 PM" src="https://github.com/user-attachments/assets/ac8e873e-0b9c-41aa-800f-39035275a605" />
 
