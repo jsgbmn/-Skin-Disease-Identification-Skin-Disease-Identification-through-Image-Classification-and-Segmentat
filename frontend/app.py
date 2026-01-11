@@ -1,79 +1,241 @@
-def get_x(row): 
-    return row['image_id']
-
+from flask import (
+    Flask, flash, render_template, Response,
+    request, redirect, url_for, session
+)
 import os
-import json
-from flask import Flask, request, render_template
-from PIL import Image
-from io import BytesIO
-from fastai.vision.all import *
+import datetime
+import cv2
+import numpy as np
+from tensorflow.keras.models import load_model
+from tensorflow.keras.preprocessing import image
+from werkzeug.utils import secure_filename
 
-app = Flask(__name__)
 
-learn = load_learner('new_own_vgg.pkl')
-interp = ClassificationInterpretation.from_learner(learn)
+UPLOAD_FOLDER = './static/Data'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'bmp'}
+MODEL_PATH = '/Users/jsgbn/Desktop/skin-identification/backend/models/model.h5'
 
-def get_y(row): 
-    return row['label']
+app = Flask(__name__, template_folder="templates")
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
+app.config['MODEL_PATH'] = MODEL_PATH
+app.secret_key = os.environ.get('SECRET_KEY', 'your-secret-key-change-in-production-2026')
 
-def classify_image(img):
-    mapping = {1: 'chickenpox',
- 2: 'corns',
- 3: 'eczema',
- 4: 'monkeypox',
- 5: 'normal',
- 6: 'warts'}
-    print(img)
-    pred_idx,_,probs = learn.predict(img)
-    pred_class = mapping[int(pred_idx)]
-    prob = probs.max()
-    prob = prob.numpy()
-    return pred_class,prob
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-@app.route("/")
-def home():
-    return render_template("index.html")
+model = None
 
-@app.route("/", methods=["POST"])
-def upload_image():
-    option = request.form["option"]
-    if option == 'Resnet152':
-        learn = load_learner('new_own_vgg.pkl')
-    uploaded_file = request.files["image"]
-    img_bytes = uploaded_file.read()
-    image = Image.open(BytesIO(img_bytes))
-    saved_file_path = os.path.join("tempDir", uploaded_file.filename)
-    with open(saved_file_path, "wb") as f:
-        f.write(img_bytes)
-    pred_class, prob = classify_image(saved_file_path)
-    description_file = open('comment.json')
-    disease_details = json.load(description_file)
-    cancers = ['Basal cell carcinoma', 'Melanoma', 'Squamous cell carcinoma']
-    if pred_class in cancers:
-        result = "Skin Cancer Detected. Please consult a doctor immediately."
-    elif pred_class == "Normal":
-        result = "No Skin disease found. Please consult a doctor if you have any concerns."
-    else:
-        result = "This is a Non-Cancerous Skin disease. Please consult a doctor for further treatment."
-    if pred_class != "Normal":
-        description = disease_details[pred_class]["Description"]
-        symptoms = disease_details[pred_class]["Symptoms"]
-        causes = disease_details[pred_class]["Causes"]
-        risk_factors = disease_details[pred_class]["Risk Factors"]
-        treatment = disease_details[pred_class]["Treatment"]
-        diagnosis = disease_details[pred_class]["Diagnosis"]
-        treatment = disease_details[pred_class]["Treatment"]
-    return render_template(
-        "index.html", 
-        prediction_text=f"The model predicts the image as: {pred_class} with probability: {prob*100:.2f}%",
-        result=result,
-        description=description,
-        symptoms=symptoms,
-        causes=causes,
-        risk_factors=risk_factors,
-        diagnosis=diagnosis,
-        treatment=treatment
+
+def allowed_file(filename: str) -> bool:
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def get_model():
+    global model
+    if model is None:
+        try:
+            model_path = app.config['MODEL_PATH']
+            if not os.path.exists(model_path):
+                raise FileNotFoundError(f"Model file not found at: {model_path}")
+            model = load_model(model_path)
+        except Exception as e:
+            raise RuntimeError(f"Failed to load model: {e}")
+
+
+def load_image(img_path: str) -> np.ndarray:
+    img = image.load_img(img_path, target_size=(256, 256))
+    img_tensor = image.img_to_array(img)
+    img_tensor = np.expand_dims(img_tensor, axis=0)
+    img_tensor = img_tensor / 255.0
+    return img_tensor
+
+
+def predict_path(img_path: str) -> str:
+    if model is None:
+        return "Model not loaded. Please check server logs."
+
+    try:
+        new_image = load_image(img_path)
+        pred = model.predict(new_image)[0][0]
+
+        if pred < 0.5:
+            return f"Skin Disease Detected (Confidence: {(1-pred)*100:.1f}%) - Please visit a specialist immediately."
+        else:
+            return f"No Skin Disease Detected (Confidence: {pred*100:.1f}%) - Consider visiting a dermatologist for verification."
+    except Exception as e:
+        return f"Error during analysis: {str(e)}"
+
+
+get_model()
+
+capture = 0
+camera = None
+latest_capture = None
+
+
+def init_camera():
+    global camera
+    if camera is None or not camera.isOpened():
+        camera = cv2.VideoCapture(0)
+        if not camera.isOpened():
+            return False
+        camera.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+        camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+    return True
+
+
+def gen_frames():
+    global capture, latest_capture
+
+    if not init_camera():
+        placeholder = np.zeros((480, 640, 3), dtype=np.uint8)
+        cv2.putText(placeholder, "Camera Not Available", (150, 240),
+                   cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+        ret, buffer = cv2.imencode('.jpg', placeholder)
+        yield (b'--frame\r\n'
+               b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
+        return
+
+    while True:
+        success, frame = camera.read()
+        if not success:
+            continue
+
+        if capture:
+            capture = 0
+            now = datetime.datetime.now()
+            timestamp = now.strftime("%Y%m%d_%H%M%S")
+            filename = f"capture_{timestamp}.png"
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            cv2.imwrite(filepath, frame)
+            latest_capture = filename
+
+        try:
+            frame_flipped = cv2.flip(frame, 1)
+            ret, buffer = cv2.imencode('.jpg', frame_flipped)
+            frame_bytes = buffer.tobytes()
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
+        except Exception:
+            continue
+
+
+@app.route("/", methods=['GET'])
+@app.route("/index", methods=['GET'])
+def index():
+    # Clear session on GET request (page reload/refresh)
+    if request.method == 'GET' and 'from_prediction' not in session:
+        session.clear()
+
+    # Remove the flag after first load
+    session.pop('from_prediction', None)
+
+    return render_template('index.html')
+
+
+@app.route("/predicts", methods=['POST'])
+def predicts():
+    if 'file' not in request.files:
+        flash('No file uploaded')
+        return redirect(url_for('index'))
+
+    file = request.files['file']
+    if file.filename == '':
+        flash('No file selected')
+        return redirect(url_for('index'))
+
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"{timestamp}_{filename}"
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(file_path)
+
+        product = predict_path(file_path)
+        user_image = url_for('static', filename=f'Data/{filename}')
+
+        # Set flag to prevent clearing on first render
+        session['from_prediction'] = True
+
+        return render_template('index.html',
+                             product=product,
+                             user_image=user_image)
+
+    flash('Invalid file type. Use PNG, JPG, JPEG, GIF, or BMP')
+    return redirect(url_for('index'))
+
+
+@app.route('/video_feed')
+def video_feed():
+    return Response(gen_frames(),
+                    mimetype='multipart/x-mixed-replace; boundary=frame')
+
+
+@app.route('/tasks', methods=['POST'])
+def tasks():
+    global capture, latest_capture
+
+    if request.method == 'POST':
+        if request.form.get('click') == 'Capture':
+            capture = 1
+
+            import time
+            time.sleep(1.0)
+
+            if latest_capture:
+                img_path = os.path.join(app.config['UPLOAD_FOLDER'], latest_capture)
+
+                if os.path.exists(img_path):
+                    product = predict_path(img_path)
+                    user_image = url_for('static', filename=f'Data/{latest_capture}')
+
+                    # Set flag to prevent clearing on first render
+                    session['from_prediction'] = True
+
+                    return render_template('index.html',
+                                         product=product,
+                                         user_image=user_image)
+                else:
+                    flash('Capture failed. Please try again.')
+            else:
+                flash('No image captured. Please try again.')
+
+    return redirect(url_for('index'))
+
+
+@app.route('/health')
+def health():
+    return {
+        'status': 'healthy',
+        'model_loaded': model is not None,
+        'model_path': app.config['MODEL_PATH']
+    }, 200
+
+
+@app.teardown_appcontext
+def cleanup(error):
+    global camera
+    if camera is not None and camera.isOpened():
+        camera.release()
+
+
+@app.errorhandler(404)
+def not_found(e):
+    return render_template('index.html'), 404
+
+
+@app.errorhandler(500)
+def server_error(e):
+    return render_template('index.html'), 500
+
+
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000))
+    debug = os.environ.get('FLASK_ENV') != 'production'
+
+    app.run(
+        host='0.0.0.0',
+        port=port,
+        debug=debug,
+        threaded=True
     )
-
-if __name__ == "__main__":
-    app.run(debug=True)

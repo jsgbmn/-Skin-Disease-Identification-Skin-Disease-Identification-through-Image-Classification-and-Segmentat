@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How It Works - SKIN</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        accent: '#14b8a6',
+                        'teal-light': '#f0fdfa',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        [x-cloak] {
+            display: none !important;
+        }
+
+        /* Step animations */
+        .step-card {
+            opacity: 0;
+            transform: translateY(50px);
+            transition: opacity 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .step-card.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .step-card:nth-child(1) {
+            transition-delay: 0.2s;
+        }
+
+        .step-card:nth-child(2) {
+            transition-delay: 0.35s;
+        }
+
+        .step-card:nth-child(3) {
+            transition-delay: 0.5s;
+        }
+
+        .step-card:nth-child(4) {
+            transition-delay: 0.65s;
+        }
+
+        /* Icon circle scale animation */
+        .icon-circle {
+            transform: scale(0);
+            transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .icon-circle.visible {
+            transform: scale(1);
+        }
+
+        .icon-circle:nth-child(1) {
+            transition-delay: 0.4s;
+        }
+
+        .icon-circle:nth-child(2) {
+            transition-delay: 0.55s;
+        }
+
+        .icon-circle:nth-child(3) {
+            transition-delay: 0.7s;
+        }
+
+        .icon-circle:nth-child(4) {
+            transition-delay: 0.85s;
+        }
+
+        /* Progress bar animation */
+        .progress-bar {
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 1.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .progress-bar.visible {
+            transform: scaleX(1);
+        }
+
+        .progress-fill {
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            transition-delay: 0.2s;
+        }
+
+        .progress-fill.visible {
+            transform: scaleX(1);
+        }
+
+        /* Header animation */
+        .header-animate {
+            animation: fadeInUp 0.8s ease-out forwards;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-gradient-to-b from-[#fafafa] to-[#f5f5f5]">
+
+    <!-- Include Navbar -->
+    {% include 'navbar.html' %}
+
+    <!-- How It Works Section -->
+    <section id="how-it-works" class="relative min-h-screen flex items-center justify-center overflow-hidden py-24">
+        <!-- Background Blobs -->
+        <div class="absolute inset-0 overflow-hidden pointer-events-none z-0">
+            <div class="absolute top-1/3 -left-32 w-96 h-96 rounded-full bg-[#14b8a6]/15 blur-3xl"></div>
+            <div class="absolute bottom-1/3 -right-32 w-80 h-80 rounded-full bg-[#fef3c7]/30 blur-3xl"></div>
+        </div>
+
+        <!-- Grid Pattern -->
+        <div class="absolute inset-0 opacity-[0.02] z-0"
+            style="background-image: linear-gradient(#0a0a0a 1px, transparent 1px), linear-gradient(90deg, #0a0a0a 1px, transparent 1px); background-size: 60px 60px;">
+        </div>
+
+        <div class="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
+            <!-- Section Header -->
+            <div class="text-center max-w-2xl mx-auto mb-20">
+                <span
+                    class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#f0fdfa] border border-[#14b8a6]/20 mb-8 text-sm font-light text-[#14b8a6] header-animate">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                    How It Works
+                </span>
+
+
+
+                <p class="text-lg md:text-xl text-[#737373] leading-relaxed font-light header-animate"
+                    style="animation-delay: 0.2s;">
+                    Four simple steps to comprehensive skin health analysis, powered by advanced neural networks.
+                </p>
+            </div>
+
+            <!-- Steps -->
+            <div class="relative">
+                <!-- Connection line - desktop -->
+                <div class="hidden lg:block absolute top-24 left-[12.5%] right-[12.5%] h-0.5 bg-gray-200"></div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-6">
+
+                    <!-- Step 1: Upload / Capture -->
+                    <div class="step-card relative text-center group">
+                        <!-- Step number circle -->
+                        <div class="relative mx-auto mb-8">
+                            <div
+                                class="icon-circle w-20 h-20 rounded-full bg-white border-2 border-gray-200 flex items-center justify-center mx-auto relative z-10 group-hover:border-[#14b8a6] transition-colors duration-500 shadow-lg">
+                                <svg class="w-8 h-8 text-[#14b8a6]" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12">
+                                    </path>
+                                </svg>
+                            </div>
+
+                            <!-- Step number badge -->
+                            <div
+                                class="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-[#14b8a6] text-white flex items-center justify-center text-sm font-medium z-20 shadow-md">
+                                01
+                            </div>
+                        </div>
+
+                        <!-- Content -->
+                        <h3 class="text-xl font-semibold text-gray-900 mb-3">Upload / Capture</h3>
+                        <p class="text-base font-light text-gray-600 leading-relaxed max-w-xs mx-auto">
+                            Snap or upload a skin photo from anywhere. Works with any device, any platform.
+                        </p>
+                    </div>
+
+                    <!-- Step 2: AI Analyzes -->
+                    <div class="step-card relative text-center group">
+                        <div class="relative mx-auto mb-8">
+                            <div
+                                class="icon-circle w-20 h-20 rounded-full bg-white border-2 border-gray-200 flex items-center justify-center mx-auto relative z-10 group-hover:border-[#14b8a6] transition-colors duration-500 shadow-lg">
+                                <svg class="w-8 h-8 text-[#14b8a6]" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                        d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z">
+                                    </path>
+                                </svg>
+                            </div>
+
+                            <div
+                                class="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-[#14b8a6] text-white flex items-center justify-center text-sm font-medium z-20 shadow-md">
+                                02
+                            </div>
+                        </div>
+
+                        <h3 class="text-xl font-semibold text-gray-900 mb-3">AI Analyzes</h3>
+                        <p class="text-base font-light text-gray-600 leading-relaxed max-w-xs mx-auto">
+                            Our CNN processes the image with precise segmentation and classification algorithms.
+                        </p>
+                    </div>
+
+                    <!-- Step 3: Get Results -->
+                    <div class="step-card relative text-center group">
+                        <div class="relative mx-auto mb-8">
+                            <div
+                                class="icon-circle w-20 h-20 rounded-full bg-white border-2 border-gray-200 flex items-center justify-center mx-auto relative z-10 group-hover:border-[#14b8a6] transition-colors duration-500 shadow-lg">
+                                <svg class="w-8 h-8 text-[#14b8a6]" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+                                    </path>
+                                </svg>
+                            </div>
+
+                            <div
+                                class="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-[#14b8a6] text-white flex items-center justify-center text-sm font-medium z-20 shadow-md">
+                                03
+                            </div>
+                        </div>
+
+                        <h3 class="text-xl font-semibold text-gray-900 mb-3">Get Results</h3>
+                        <p class="text-base font-light text-gray-600 leading-relaxed max-w-xs mx-auto">
+                            Receive instant diagnosis probability, heatmap visualization, and detailed report.
+                        </p>
+                    </div>
+
+                    <!-- Step 4: Take Action -->
+                    <div class="step-card relative text-center group">
+                        <div class="relative mx-auto mb-8">
+                            <div
+                                class="icon-circle w-20 h-20 rounded-full bg-white border-2 border-gray-200 flex items-center justify-center mx-auto relative z-10 group-hover:border-[#14b8a6] transition-colors duration-500 shadow-lg">
+                                <svg class="w-8 h-8 text-[#14b8a6]" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                        d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z">
+                                    </path>
+                                </svg>
+                            </div>
+
+                            <div
+                                class="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-[#14b8a6] text-white flex items-center justify-center text-sm font-medium z-20 shadow-md">
+                                04
+                            </div>
+                        </div>
+
+                        <h3 class="text-xl font-semibold text-gray-900 mb-3">Take Action</h3>
+                        <p class="text-base font-light text-gray-600 leading-relaxed max-w-xs mx-auto">
+                            Consult with doctors, track over time, and reduce infection risk by up to 40%.
+                        </p>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Progress indicator -->
+            <div class="mt-16 h-1 bg-[#14b8a6]/20 rounded-full max-w-md mx-auto overflow-hidden progress-bar">
+                <div class="progress-fill h-full bg-[#14b8a6]"></div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Intersection Observer for scroll animations
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        // Animate step cards
+                        document.querySelectorAll('.step-card').forEach(card => {
+                            card.classList.add('visible');
+                        });
+
+                        // Animate icon circles
+                        document.querySelectorAll('.icon-circle').forEach(circle => {
+                            circle.classList.add('visible');
+                        });
+
+                        // Animate progress bar
+                        document.querySelector('.progress-bar')?.classList.add('visible');
+                        document.querySelector('.progress-fill')?.classList.add('visible');
+                    }
+                });
+            }, {
+                threshold: 0.2,
+                rootMargin: '-50px'
+            });
+
+            // Observe the section
+            const section = document.querySelector('#how-it-works');
+            if (section) {
+                observer.observe(section);
+            }
+        });
+    </script>
+
+</body>
+
+</html>
