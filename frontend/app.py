@@ -1,9 +1,11 @@
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+os.environ['OMP_NUM_THREADS'] = '1'
 
 from flask import (
     Flask, flash, render_template, Response,
     request, redirect, url_for, session
 )
-import os
 import datetime
 import cv2
 import numpy as np
@@ -14,10 +16,7 @@ from werkzeug.utils import secure_filename
 
 UPLOAD_FOLDER = './static/Data'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'bmp'}
-
-# Fixed MODEL_PATH - works on Render and locally
 MODEL_PATH = os.environ.get('MODEL_PATH', '../backend/models/model.h5')
-
 
 app = Flask(__name__, template_folder="templates")
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -38,10 +37,19 @@ def get_model():
     global model
     if model is None:
         try:
+            import tensorflow as tf
+
+            # Optimize TensorFlow memory usage
+            tf.config.optimizer.set_jit(True)
+
             model_path = app.config['MODEL_PATH']
             if not os.path.exists(model_path):
                 raise FileNotFoundError(f"Model file not found at: {model_path}")
-            model = load_model(model_path)
+
+            # Load with optimization
+            model = load_model(model_path, compile=False)
+            model.compile(optimizer='adam', loss='binary_crossentropy')
+
         except Exception as e:
             raise RuntimeError(f"Failed to load model: {e}")
 
@@ -56,11 +64,11 @@ def load_image(img_path: str) -> np.ndarray:
 
 def predict_path(img_path: str) -> str:
     if model is None:
-        return "Model not loaded. Please check server logs."
+        get_model()
 
     try:
         new_image = load_image(img_path)
-        pred = model.predict(new_image)[0][0]
+        pred = model.predict(new_image, verbose=0)[0][0]
 
         if pred < 0.5:
             return f"Skin Disease Detected (Confidence: {(1-pred)*100:.1f}%) - Please visit a specialist immediately."
@@ -70,7 +78,8 @@ def predict_path(img_path: str) -> str:
         return f"Error during analysis: {str(e)}"
 
 
-get_model()
+# Don't load model at startup - load on first prediction
+# get_model()  # ← Remove this line
 
 capture = 0
 camera = None
@@ -79,6 +88,11 @@ latest_capture = None
 
 def init_camera():
     global camera
+
+    # Disable camera on Render (servers don't have cameras)
+    if os.environ.get('RENDER'):
+        return False
+
     if camera is None or not camera.isOpened():
         camera = cv2.VideoCapture(0)
         if not camera.isOpened():
@@ -93,8 +107,8 @@ def gen_frames():
 
     if not init_camera():
         placeholder = np.zeros((480, 640, 3), dtype=np.uint8)
-        cv2.putText(placeholder, "Camera Not Available", (150, 240),
-                   cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+        cv2.putText(placeholder, "Camera Not Available on Server", (100, 240),
+                   cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
         ret, buffer = cv2.imencode('.jpg', placeholder)
         yield (b'--frame\r\n'
                b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
@@ -205,11 +219,7 @@ def tasks():
 
 @app.route('/health')
 def health():
-    return {
-        'status': 'healthy',
-        'model_loaded': model is not None,
-        'model_path': app.config['MODEL_PATH']
-    }, 200
+    return {'status': 'healthy'}, 200
 
 
 @app.teardown_appcontext
@@ -231,11 +241,4 @@ def server_error(e):
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 10000))
-    debug = os.environ.get('FLASK_ENV') != 'production'
-
-    app.run(
-        host='0.0.0.0',
-        port=port,
-        debug=debug,
-        threaded=True
-    )
+    app.run(host='0.0.0.0', port=port, debug=False)
