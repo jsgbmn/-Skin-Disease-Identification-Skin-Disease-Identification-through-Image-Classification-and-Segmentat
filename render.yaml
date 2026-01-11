@@ -6,14 +6,15 @@ services:
     region: oregon
     plan: free
     branch: main
+    rootDir: frontend
     buildCommand: |
       pip install --upgrade pip setuptools wheel
-      pip install -r requirements.txt
-    startCommand: gunicorn app:app
+      pip install -r ../requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --timeout 300
     envVars:
       - key: PYTHON_VERSION
-        value: 3.11.0
+        value: 3.11.9
       - key: MODEL_PATH
-        value: /opt/render/project/src/backend/models/model.h5
+        value: ../backend/models/model.h5
       - key: FLASK_ENV
         value: production
